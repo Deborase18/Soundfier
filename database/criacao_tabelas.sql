@@ -1,124 +1,141 @@
-CREATE TABLE cidadao ( 
-cpf INT PRIMARY KEY,  
-idsolicitaçao INT,  
-idimovel INT,  
-senha INT,  
-telefone INT,  
-email INT,  
-nome INT,  
-data_nascimento INT,  
-); 
 
+-- =========================================
+-- BANCO DE DADOS: SOUNDFIER
+-- =========================================
 
-CREATE TABLE servico ( 
-id_servico INT PRIMARY KEY,  
-idsolicitaçao INT,  
-categoria INT,  
-descricao INT,  
-nome INT,  
-); 
+-- 1. CIDADÃO
+CREATE TABLE IF NOT EXISTS cidadao (
+    id_cidadao SERIAL PRIMARY KEY,
+    cpf CHAR(11) UNIQUE NOT NULL,
+    senha_hash VARCHAR(255) NOT NULL,
+    telefone VARCHAR(20),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    nome VARCHAR(150) NOT NULL,
+    data_nascimento DATE
+);
 
+-- 2. SERVIÇO
+CREATE TABLE IF NOT EXISTS servico (
+    id_servico SERIAL PRIMARY KEY,
+    categoria VARCHAR(100),
+    descricao TEXT,
+    nome VARCHAR(150) NOT NULL
+);
 
-CREATE TABLE solicitaçao ( 
-id_solicitacao INT PRIMARY KEY,  
-data INT,  
-descricao INT,  
-status INT,  
-resposta INT,  
-numero_protocolo INT,  
-); 
+-- 3. IMÓVEL
+CREATE TABLE IF NOT EXISTS imovel (
+    id_imovel SERIAL PRIMARY KEY,
+    id_cidadao INT NOT NULL,
+    logradouro VARCHAR(200),
+    numero VARCHAR(20),
+    bairro VARCHAR(100),
+    cidade VARCHAR(100),
+    cep CHAR(8),
+    situacao VARCHAR(50),
 
+    FOREIGN KEY (id_cidadao)
+        REFERENCES cidadao(id_cidadao)
+);
 
-CREATE TABLE feedback ( 
-id_feedback INT PRIMARY KEY,  
-idsolicitaçao INT,  
-nota INT,  
-comentario INT,  
-data_avaliacao INT,  
-); 
+-- 4. ENDEREÇO
+CREATE TABLE IF NOT EXISTS endereco (
+    id_endereco SERIAL PRIMARY KEY,
+    id_cidadao INT NOT NULL,
+    logradouro VARCHAR(200),
+    bairro VARCHAR(100),
+    numero VARCHAR(20),
+    cidade VARCHAR(100),
+    cep CHAR(8),
+    uf CHAR(2),
 
-CREATE TABLE autenticacao ( 
-id_autenticacao INT PRIMARY KEY,  
-idcidadao INT,  
-data INT,  
-horario INT,  
-status INT,  
-); 
+    FOREIGN KEY (id_cidadao)
+        REFERENCES cidadao(id_cidadao)
+);
 
+-- 5. SOLICITAÇÃO
+CREATE TABLE IF NOT EXISTS solicitacao (
+    id_solicitacao SERIAL PRIMARY KEY,
+    id_cidadao INT NOT NULL,
+    id_servico INT NOT NULL,
+    id_imovel INT,
+    data_solicitacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    descricao TEXT,
+    status VARCHAR(30) DEFAULT 'Pendente',
+    resposta TEXT,
+    numero_protocolo VARCHAR(30) UNIQUE NOT NULL,
 
-CREATE TABLE interacao ( 
-id_interacao INT PRIMARY KEY,  
-idcidadao INT,  
-tipo_entrada INT,  
-data_hora INT,
-comando_recebido INT,  
-resposta_sistema INT,  
-resultado INT,  
-compreendida INT,  
-); 
+    FOREIGN KEY (id_cidadao)
+        REFERENCES cidadao(id_cidadao),
 
+    FOREIGN KEY (id_servico)
+        REFERENCES servico(id_servico),
 
-CREATE TABLE imovel ( 
-id_imovel INT PRIMARY KEY,  
-idsolicitaçao INT,  
-logradouro INT,  
-numero INT,  
-bairro INT,  
-cidade INT,  
-cep INT,  
-situacao INT,  
-); 
+    FOREIGN KEY (id_imovel)
+        REFERENCES imovel(id_imovel)
+);
 
+-- 6. UNIDADE
+CREATE TABLE IF NOT EXISTS unidade (
+    id_unidade SERIAL PRIMARY KEY,
+    nome VARCHAR(150) NOT NULL,
+    numero VARCHAR(20),
+    logradouro VARCHAR(200),
+    bairro VARCHAR(100),
+    telefone VARCHAR(20)
+);
 
-CREATE TABLE unidade ( 
-id_unidade INT PRIMARY KEY,  
-idagendamento INT,  
-nome INT,  
-numero INT,  
-logradouro INT,  
-bairro INT,  
-telefone INT,  
-); 
+-- 7. AGENDAMENTO
+CREATE TABLE IF NOT EXISTS agendamento (
+    id_agendamento SERIAL PRIMARY KEY,
+    id_solicitacao INT NOT NULL,
+    id_unidade INT NOT NULL,
+    status VARCHAR(30) DEFAULT 'Agendado',
+    horario TIME NOT NULL,
+    data_agendamento DATE NOT NULL,
+    tipo_consulta VARCHAR(100),
 
+    FOREIGN KEY (id_solicitacao)
+        REFERENCES solicitacao(id_solicitacao),
 
-CREATE TABLE agendamento ( 
-id_agendamento INT PRIMARY KEY,  
-idsolicitaçao INT,  
-status INT,  
-horario INT,  
-data_agendamento INT,  
-tipo_consulta INT,  
-); 
+    FOREIGN KEY (id_unidade)
+        REFERENCES unidade(id_unidade)
+);
 
+-- 8. FEEDBACK
+CREATE TABLE IF NOT EXISTS feedback (
+    id_feedback SERIAL PRIMARY KEY,
+    id_solicitacao INT NOT NULL,
+    nota SMALLINT CHECK (nota BETWEEN 1 AND 5),
+    comentario TEXT,
+    data_avaliacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-CREATE TABLE endereco ( 
-id_endereco INT PRIMARY KEY,  
-idcidadao INT,  
-logradouro INT,  
-bairro INT,  
-numero INT,  
-cidade INT,  
-cep INT,  
-uf INT,  
-); 
+    FOREIGN KEY (id_solicitacao)
+        REFERENCES solicitacao(id_solicitacao)
+);
 
+-- 9. AUTENTICAÇÃO
+CREATE TABLE IF NOT EXISTS autenticacao (
+    id_autenticacao SERIAL PRIMARY KEY,
+    id_cidadao INT NOT NULL,
+    data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(30),
 
-ALTER TABLE cidadao ADD FOREIGN KEY(idsolicitaçao) REFERENCES solicitaçao (idsolicitaçao)
+    FOREIGN KEY (id_cidadao)
+        REFERENCES cidadao(id_cidadao)
+);
 
-ALTER TABLE cidadao ADD FOREIGN KEY(idimovel) REFERENCES imovel (idimovel)
+-- 10. INTERAÇÃO
+CREATE TABLE IF NOT EXISTS interacao (
+    id_interacao SERIAL PRIMARY KEY,
+    id_cidadao INT NOT NULL,
+    tipo_entrada VARCHAR(30),
+    data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    comando_recebido TEXT,
+    resposta_sistema TEXT,
+    resultado TEXT,
+    compreendida BOOLEAN,
 
-ALTER TABLE servico ADD FOREIGN KEY(idsolicitaçao) REFERENCES solicitaçao (idsolicitaçao)
+    FOREIGN KEY (id_cidadao)
+        REFERENCES cidadao(id_cidadao)
+);
 
-ALTER TABLE feedback ADD FOREIGN KEY(idsolicitaçao) REFERENCES solicitaçao (idsolicitaçao)
-
-ALTER TABLE autenticacao ADD FOREIGN KEY(idcidadao) REFERENCES cidadao (idcidadao)
-
-ALTER TABLE interacao ADD FOREIGN KEY(idcidadao) REFERENCES cidadao (idcidadao)
-
-ALTER TABLE imovel ADD FOREIGN KEY(idsolicitaçao) REFERENCES solicitaçao (idsolicitaçao)
-
-ALTER TABLE unidade ADD FOREIGN KEY(idagendamento) REFERENCES agendamento (idagendamento)
-
-ALTER TABLE agendamento ADD FOREIGN KEY(idsolicitaçao) REFERENCES solicitaçao (idsolicitaçao)
-
-ALTER TABLE endereco ADD FOREIGN KEY(idcidadao) REFERENCES cidadao (idcidadao)

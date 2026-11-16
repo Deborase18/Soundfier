@@ -53,6 +53,11 @@ O funcionamento do SOUNDFIER foi planejado para seguir uma sequência simples:
 | CSS3 | Estilização e organização visual da interface. |
 | JavaScript | Interatividade e funcionalidades do frontend. |
 | Node.js | Ambiente de execução do backend. |
+| Express.js | Criação do servidor e gerenciamento das rotas da API. |
+| PostgreSQL | Sistema de gerenciamento do banco de dados. |
+| pg | Conexão entre o backend e o PostgreSQL. |
+| bcryptjs | Criação de hash para armazenamento seguro de senhas. |
+| dotenv | Gerenciamento das variáveis de ambiente. |
 | SQL | Criação e manipulação das tabelas do banco de dados. |
 | Git | Controle de versão do projeto. |
 | GitHub | Armazenamento e compartilhamento do código-fonte. |
@@ -95,6 +100,3 @@ A documentação técnica apresenta informações complementares sobre a estrutu
 
 **Finalidade:** Desenvolvimento de uma solução tecnológica voltada à acessibilidade e inclusão digital nos serviços públicos municipais.
 
----
-
-**SOUNDFIER — Sua voz conectada aos serviços públicos.** 
