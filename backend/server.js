@@ -3,22 +3,18 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
+const path = require('path');
 
 const routes = require('./routes/routes');
 // Configurações do servidor
 app.use(cors());
 app.use(express.json());
-app.use((req, res, next) => {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    next();
-});
 app.use('/api', routes);
+app.use(express.static(path.join(__dirname, '../frontend')));
 
 // Rota inicial para testar o servidor
-app.get('/', (req, res) => {
-    res.send('Backend do Soundfier está funcionando!');
-});
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, '../frontend/index.html')));
 
 // Iniciar servidor
 app.listen(PORT, () => {

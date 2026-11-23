@@ -6,9 +6,9 @@ async function cadastrarCidadao(req, res) {
     try {
         const { cpf, senha, telefone, email, nome, data_nascimento } = req.body;
 
-        if (!cpf || !senha || !email || !nome) {
+        if (!/^\d{11}$/.test(String(cpf || '')) || typeof senha !== 'string' || senha.length < 8 || typeof email !== 'string' || !email.includes('@') || !String(nome || '').trim()) {
             return res.status(400).json({
-                mensagem: 'CPF, senha, e-mail e nome são obrigatórios.'
+                mensagem: 'Informe CPF com 11 dígitos, senha de pelo menos 8 caracteres, nome e e-mail válidos.'
             });
         }
 
