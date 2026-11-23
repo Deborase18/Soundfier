@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width,initial-scale=1" name="viewport"/>
+  <meta content="#0a1425" name="theme-color"/>
+  <title>
+   Soundfier | Plataforma de Servi&ccedil;os
+  </title>
+  <link href="/css/style.css" rel="stylesheet"/>
+ </head>
+ <body>
+  <a class="skip" href="#conteudo">
+   Pular para conte&uacute;do
+  </a>
+  <div class="layout">
+   <aside class="sidebar">
+    <div class="brand">
+     SOUND
+     <span>
+      FIER
+     </span>
+     <small>
+      Acesso simples &agrave; cidade
+     </small>
+    </div>
+    <nav aria-label="Navega&ccedil;&atilde;o principal">
+     <button class="nav active" data-page="inicio">
+      ⌂ &nbsp; In&iacute;cio
+     </button>
+     <button class="nav" data-page="servicos">
+      ▦ &nbsp; Servi&ccedil;os
+     </button>
+     <button class="nav" data-page="solicitar">
+      ✎ &nbsp; Nova solicita&ccedil;&atilde;o
+     </button>
+     <button class="nav" data-page="historico">
+      ◷ &nbsp; Acompanhar
+     </button>
+     <button class="nav" data-page="conta">
+      ♙ &nbsp; Minha conta
+     </button>
+    </nav>
+    <div class="sidebar-note">
+     Soundfier &copy; 2026
+    </div>
+   </aside>
+   <main class="content" id="conteudo">
+    <header class="top">
+     <span class="mobile-brand">
+      SOUNDFIER
+     </span>
+     <div class="top-right">
+      <span class="pill" id="connection">
+       Verificando API...
+      </span>
+      <button class="small-btn" id="contrast" title="Alternar alto contraste">
+       ◐ Contraste
+      </button>
+      <button class="small-btn" id="font" title="Aumentar texto">
+       A+ Texto
+      </button>
+     </div>
+    </header>
+    <section class="hero">
+     <div class="eyebrow">
+      SERVI&Ccedil;OS MUNICIPAIS ACESS&Iacute;VEIS
+     </div>
+     <h1 id="page-title">
+      Sua cidade, mais perto de voc&ecirc;.
+     </h1>
+     <p id="page-subtitle">
+      Encontre servi&ccedil;os, registre solicita&ccedil;&otilde;es e acompanhe seus protocolos em um s&oacute; lugar.
+     </p>
+    </section>
+    <div aria-live="polite" class="alert hidden" id="alert" role="status">
+    </div>
+    <section class="page" id="page-inicio">
+     <div class="cards">
+      <button class="action-card" data-go="servicos">
+       <span class="card-icon">
+        ▦
+       </span>
+       <strong>
+        Explorar servi&ccedil;os
+       </strong>
+       <span>
+        Veja o que est&aacute; dispon&iacute;vel para voc&ecirc;.
+       </span>
+       <b>
+        Ver servi&ccedil;os &rarr;
+       </b>
+      </button>
+      <button class="action-card" data-go="solicitar">
+       <span class="card-icon">
+        ✎
+       </span>
+       <strong>
+        Fazer solicita&ccedil;&atilde;o
+       </strong>
+       <span>
+        Registre um pedido e receba seu protocolo.
+       </span>
+       <b>
+        Come&ccedil;ar &rarr;
+       </b>
+      </button>
+      <button class="action-card" data-go="historico">
+       <span class="card-icon">
+        ◷
+       </span>
+       <strong>
+        Acompanhar pedido
+       </strong>
+       <span>
+        Consulte o andamento das solicita&ccedil;&otilde;es.
+       </span>
+       <b>
+        Consultar &rarr;
+       </b>
+      </button>
+     </div>
+     <div class="panel voice">
+      <div>
+       <h2>
+        Prefere falar?
+       </h2>
+       <p>
+        Use sua voz para buscar servi&ccedil;os. O reconhecimento depende da compatibilidade e permiss&atilde;o do navegador.
+       </p>
+      </div>
+      <div class="voice-actions">
+       <button class="primary" id="speak">
+        🎙 Falar servi&ccedil;o
+       </button>
+       <span aria-live="polite" id="speech-result">
+       </span>
+      </div>
+     </div>
+    </section>
+    <section class="page hidden" id="page-servicos">
+     <div class="panel">
+      <div class="section-head">
+       <div>
+        <h2>
+         Cat&aacute;logo de servi&ccedil;os
+        </h2>
+        <p>
+         Confira os servi&ccedil;os dispon&iacute;veis.
+        </p>
+       </div>
+       <button class="small-btn" id="reload">
+        &orarr; Atualizar
+       </button>
+      </div>
+      <label for="search">
+       Buscar servi&ccedil;o
+      </label>
+      <input id="search" placeholder="Ex.: ilumina&ccedil;&atilde;o, limpeza, IPTU..." type="search"/>
+      <div class="service-grid" id="services">
+      </div>
+     </div>
+    </section>
+    <section class="page hidden" id="page-solicitar">
+     <div class="panel form-panel">
+      <h2>
+       Nova solicita&ccedil;&atilde;o
+      </h2>
+      <p id="request-account-status">
+       Entre na sua conta para registrar solicita&ccedil;&otilde;es.
+      </p>
+      <p>
+       Preencha os dados para registrar sua solicita&ccedil;&atilde;o.
+      </p>
+      <form id="request-form">
+       <label for="service-select">
+        Servi&ccedil;o *
+       </label>
+       <select id="service-select" required="">
+        <option value="">
+         Carregando servi&ccedil;os...
+        </option>
+       </select>
+       <label for="description">
+        Descreva o que precisa
+       </label>
+       <textarea id="description" maxlength="2000" placeholder="Conte mais sobre sua solicita&ccedil;&atilde;o..." rows="5"></textarea>
+       <button class="primary" id="submit-request" type="submit">
+        Registrar solicita&ccedil;&atilde;o
+       </button>
+      </form>
+      <div class="protocol hidden" id="protocol" role="status">
+      </div>
+     </div>
+    </section>
+    <section class="page hidden" id="page-historico">
+     <div class="panel">
+      <h2>
+       Acompanhe suas solicita&ccedil;&otilde;es
+      </h2>
+      <p id="history-account-status">
+       Entre na sua conta para consultar seus pedidos.
+      </p>
+      <p>
+       Consulte seus pedidos ap&oacute;s entrar na sua conta.
+      </p>
+      <div class="history" id="history">
+      </div>
+     </div>
+    </section>
+    <section class="page hidden" id="page-conta">
+     <div class="panel form-panel">
+      <h2>
+       Minha conta
+      </h2>
+      <div class="hidden" id="account-info">
+       <p id="account-name">
+       </p>
+       <button class="small-btn" id="logout" type="button">
+        Sair da conta
+       </button>
+      </div>
+      <div id="account-forms">
+       <form id="login-form">
+        <h3>
+         Entrar
+        </h3>
+        <label for="login-cpf">
+         CPF
+        </label>
+        <input id="login-cpf" inputmode="numeric" maxlength="14" placeholder="Somente n&uacute;meros" required=""/>
+        <label for="login-password">
+         Senha
+        </label>
+        <input id="login-password" required="" type="password"/>
+        <button class="primary" type="submit">
+         Entrar
+        </button>
+       </form>
+       <hr/>
+       <form id="signup-form">
+        <h3>
+         Criar cadastro
+        </h3>
+        <label for="signup-name">
+         Nome completo
+        </label>
+        <input id="signup-name" maxlength="150" required=""/>
+        <label for="signup-cpf">
+         CPF
+        </label>
+        <input id="signup-cpf" inputmode="numeric" maxlength="14" required=""/>
+        <label for="signup-email">
+         E-mail
+        </label>
+        <input id="signup-email" required="" type="email"/>
+        <label for="signup-phone">
+         Telefone (opcional)
+        </label>
+        <input id="signup-phone" type="tel"/>
+        <label for="signup-password">
+         Senha (m&iacute;nimo 8 caracteres)
+        </label>
+        <input id="signup-password" minlength="8" required="" type="password"/>
+        <button class="primary" type="submit">
+         Cadastrar
+        </button>
+       </form>
+      </div>
+     </div>
+    </section>
+    <footer>
+     Soundfier &copy; 2026 &mdash; Tecnologia e acessibilidade para todos.
+    </footer>
+   </main>
+  </div>
+  <script defer="" src="/js/navegacao.js">
+  </script>
+ </body>
+</html>
