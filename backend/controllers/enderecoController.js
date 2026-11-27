@@ -4,7 +4,6 @@ const pool = require('../config/database');
 const cadastrarEndereco = async (req, res) => {
     try {
         const {
-            id_cidadao,
             logradouro,
             bairro,
             numero,
@@ -14,8 +13,8 @@ const cadastrarEndereco = async (req, res) => {
         } = req.body;
 
         if (!id_cidadao) {
-            return res.status(400).json({
-                mensagem: 'O ID do cidadão é obrigatório.'
+            return res.status(401).json({
+                mensagem: 'Cidadão não auttenticado.'
             });
         }
 

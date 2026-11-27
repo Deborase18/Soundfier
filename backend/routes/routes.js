@@ -22,7 +22,8 @@ const {
 
 const {
     cadastrarAgendamento,
-    listarAgendamentos
+    listarAgendamentos,
+    listarHorariosDisponiveis
 } = require('../controllers/agendamentoController');
 
 const {
@@ -74,7 +75,73 @@ router.get('/solicitacoes', requireAuth, async (req,res) => {
 
 // Rotas dos agendamentos
 router.post('/agendamentos', requireAuth, cadastrarAgendamento);
-router.get('/agendamentos', requireAuth, (req,res)=>res.status(403).json({mensagem:'Acesso restrito.'}));
+
+router.get('/agendamentos', requireAuth, async (req, res) => {
+    try {
+        const resultado = await pool.query(
+            `SELECT
+                a.id_agendamento,
+                a.id_solicitacao,
+                a.data_agendamento,
+                a.horario,
+                a.status AS status_agendamento,
+                a.tipo_consulta,
+                u.nome AS unidade,
+                s.numero_protocolo
+             FROM agendamento a
+             JOIN solicitacao s
+                ON s.id_solicitacao = a.id_solicitacao
+             JOIN unidade u
+                ON u.id_unidade = a.id_unidade
+             WHERE s.id_cidadao = $1
+             ORDER BY a.data_agendamento DESC, a.horario DESC`,
+            [req.citizenId]
+        );
+
+        res.status(200).json(resultado.rows);
+
+    } catch (erro) {
+        console.error(erro);
+        res.status(500).json({
+            mensagem: 'Erro ao consultar agendamentos.'
+        });
+    }
+});
+router.get('/agendamentos/disponiveis', requireAuth, listarHorariosDisponiveis);
+// Cancelar agendamento
+router.patch('/agendamentos/:id/cancelar', requireAuth, async (req, res) => {
+    try {
+        const id = Number(req.params.id);
+
+        const resultado = await pool.query(
+            `UPDATE agendamento a
+             SET status = 'Cancelado'
+             FROM solicitacao s
+             WHERE a.id_agendamento = $1
+             AND a.id_solicitacao = s.id_solicitacao
+             AND s.id_cidadao = $2
+             AND LOWER(a.status) = 'agendado'
+             RETURNING a.id_agendamento`,
+            [id, req.citizenId]
+        );
+
+        if (resultado.rowCount === 0) {
+            return res.status(404).json({
+                mensagem: 'Agendamento não encontrado ou não pode ser cancelado.'
+            });
+        }
+
+        res.json({
+            mensagem: 'Agendamento cancelado com sucesso!'
+        });
+
+    } catch (erro) {
+        console.error(erro);
+        res.status(500).json({
+            mensagem: 'Erro ao cancelar agendamento.'
+        });
+    }
+});
 
 // Rotas das unidades
 router.post('/unidades', cadastrarUnidade);
@@ -85,17 +152,8 @@ router.post('/feedbacks', requireAuth, cadastrarFeedback);
 router.get('/feedbacks', requireAuth, (req,res)=>res.status(403).json({mensagem:'Acesso restrito.'}));
 
 // Rotas de autenticação
-router.post('/login', async (req,res) => {
-  try {
-    const cpf = String(req.body.cpf || '').replace(/\D/g,'');
-    const senha = req.body.senha;
-    if (!/^\d{11}$/.test(cpf) || typeof senha !== 'string') return res.status(400).json({mensagem:'Informe CPF e senha válidos.'});
-    const result = await pool.query('SELECT id_cidadao, nome, email, senha_hash FROM cidadao WHERE cpf = $1', [cpf]);
-    const user = result.rows[0];
-    if (!user || !(await bcrypt.compare(senha,user.senha_hash))) return res.status(401).json({mensagem:'CPF ou senha inválidos.'});
-    res.json({token:sign({id:user.id_cidadao}),cidadao:{id_cidadao:user.id_cidadao,nome:user.nome,email:user.email}});
-  } catch(err) { console.error(err); res.status(500).json({mensagem:'Erro ao entrar.'}); }
-});
+router.post('/login', autenticarCidadao);
+
 router.get('/minha-conta', requireAuth, async(req,res)=>{
   try { const result = await pool.query('SELECT id_cidadao,nome,email FROM cidadao WHERE id_cidadao=$1',[req.citizenId]); if (!result.rows.length) return res.status(404).json({mensagem:'Conta não encontrada.'}); res.json(result.rows[0]); }
   catch(err) { console.error(err); res.status(500).json({mensagem:'Erro ao consultar conta.'}); }

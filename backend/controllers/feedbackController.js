@@ -4,10 +4,32 @@ const pool = require('../config/database');
 async function cadastrarFeedback(req, res) {
     try {
         const { id_solicitacao, nota, comentario } = req.body;
+        const id_cidadao = req.citizenId;
 
         if (!id_solicitacao || !nota) {
             return res.status(400).json({
                 mensagem: 'A solicitação e a nota são obrigatórias.'
+            });
+        }
+        const solicitacao = await pool.query(
+            `SELECT id_solicitacao, status
+            FROM solicitacao
+            WHERE id_solicitacao = $1
+            AND id_cidadao = $2`,
+            [id_solicitacao, id_cidadao]
+        );
+
+        if (solicitacao.rows.length === 0) {
+            return res.status(403).json({
+                mensagem: 'Você não pode avaliar esta solicitação.'
+            });
+        }
+
+        const status = String(solicitacao.rows[0].status || '').toLowerCase();
+
+        if (!['concluído', 'concluido', 'atendido'].includes(status)) {
+            return res.status(400).json({
+                mensagem: 'Você só pode avaliar uma solicitação concluída.'
             });
         }
 
@@ -32,6 +54,11 @@ async function cadastrarFeedback(req, res) {
 
     } catch (erro) {
         console.error(erro);
+        if (erro.code === '23505') {
+            return res.status(409).json({
+                mensagem: 'Esta solicitação já foi avaliada.'
+            });
+        }
 
         if (erro.code === '23503') {
             return res.status(400).json({

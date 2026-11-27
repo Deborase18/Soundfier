@@ -11,7 +11,7 @@ async function cadastrarUnidade(req, res) {
             telefone
         } = req.body;
 
-        if (!nome) {
+        if (!nome || !nome.trim()) {
             return res.status(400).json({
                 mensagem: 'O nome da unidade é obrigatório.'
             });

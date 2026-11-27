@@ -5,7 +5,7 @@ async function cadastrarServico(req, res) {
     try {
         const { nome, categoria, descricao } = req.body;
 
-        if (!nome) {
+       if (!nome || !nome.trim()) {
             return res.status(400).json({
                 mensagem: 'O nome do serviço é obrigatório.'
             });

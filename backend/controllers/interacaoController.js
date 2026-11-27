@@ -4,17 +4,23 @@ const pool = require('../config/database');
 async function cadastrarInteracao(req, res) {
     try {
         const {
-            id_cidadao,
             tipo_entrada,
             comando_recebido,
             resposta_sistema,
             resultado,
             compreendida
         } = req.body;
+        const id_cidadao = req.citizenId;
 
-        if (!id_cidadao || !comando_recebido) {
+        if (!id_cidadao) {
+            return res.status(401).json({
+                mensagem: 'Cidadão não autenticado.'
+            });
+        }
+
+        if (!comando_recebido || !comando_recebido.trim()) {
             return res.status(400).json({
-                mensagem: 'O cidadão e o comando recebido são obrigatórios.'
+                mensagem: 'O comando recebido é obrigatório.'
             });
         }
 

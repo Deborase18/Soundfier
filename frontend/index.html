@@ -185,6 +185,24 @@
         Descreva o que precisa
        </label>
        <textarea id="description" maxlength="2000" placeholder="Conte mais sobre sua solicita&ccedil;&atilde;o..." rows="5"></textarea>
+        <!-- NOVOS CAMPOS DE AGENDAMENTO -->
+        <div id="appointment-fields" class="hidden">
+
+            <label for="unit-select">Escolha a unidade *</label>
+            <select id="unit-select">
+                <option value="">Selecione uma unidade</option>
+            </select>
+
+            <label for="appointment-date">Escolha a data *</label>
+            <input type="date" id="appointment-date">
+
+            <label for="appointment-time">Escolha o horário *</label>
+            <select id="appointment-time">
+                <option value="">Selecione primeiro a data</option>
+            </select>
+
+        </div>
+        <!--botao-->
        <button class="primary" id="submit-request" type="submit">
         Registrar solicita&ccedil;&atilde;o
        </button>
@@ -273,6 +291,11 @@
      Soundfier &copy; 2026 &mdash; Tecnologia e acessibilidade para todos.
     </footer>
    </main>
+
+   <button class="voice-float" id="speak-float" type="button" aria-label="Ativar assistente de voz">
+    🎙 Falar
+    </button>
+    <span id="speech-result-float" aria-live="polite"></span>
   </div>
   <script defer="" src="/js/navegacao.js">
   </script>

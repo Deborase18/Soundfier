@@ -1,10 +1,12 @@
 const pool = require('../config/database');
 const bcrypt = require('bcryptjs');
+const { sign } = require('../auth');
 
 // Realizar autenticação do cidadão
 async function autenticarCidadao(req, res) {
     try {
-        const { cpf, senha } = req.body;
+        const cpf = String(req.body.cpf || '').replace(/\D/g, '');
+        const senha = req.body.senha;
 
         if (!cpf || !senha) {
             return res.status(400).json({
@@ -48,6 +50,7 @@ async function autenticarCidadao(req, res) {
 
         res.status(200).json({
             mensagem: 'Autenticação realizada com sucesso!',
+            token: sign({ id: cidadao.id_cidadao }),
             cidadao: {
                 id_cidadao: cidadao.id_cidadao,
                 nome: cidadao.nome,
