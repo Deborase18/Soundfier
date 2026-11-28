@@ -76,8 +76,14 @@ async function cadastrarFeedback(req, res) {
 async function listarFeedbacks(req, res) {
     try {
         const resultado = await pool.query(
-            `SELECT * FROM feedback
-             ORDER BY id_feedback`
+            `SELECT id_solicitacao
+             FROM feedback
+             WHERE id_solicitacao IN (
+                 SELECT id_solicitacao
+                 FROM solicitacao
+                 WHERE id_cidadao = $1
+             )`,
+            [req.citizenId]
         );
 
         res.status(200).json(resultado.rows);
@@ -86,11 +92,10 @@ async function listarFeedbacks(req, res) {
         console.error(erro);
 
         res.status(500).json({
-            mensagem: 'Erro ao listar feedbacks.'
+            mensagem: 'Erro ao consultar avaliações.'
         });
     }
 }
-
 module.exports = {
     cadastrarFeedback,
     listarFeedbacks

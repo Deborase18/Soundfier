@@ -31,6 +31,9 @@
      <button class="nav" data-page="servicos">
       ▦ &nbsp; Servi&ccedil;os
      </button>
+     <button class="nav" data-page="iptu">
+        &nbsp; IPTU e imóveis
+     </button>
      <button class="nav" data-page="solicitar">
       ✎ &nbsp; Nova solicita&ccedil;&atilde;o
      </button>
@@ -138,6 +141,7 @@
       </div>
      </div>
     </section>
+
     <section class="page hidden" id="page-servicos">
      <div class="panel">
       <div class="section-head">
@@ -161,6 +165,83 @@
       </div>
      </div>
     </section>
+    <section class="page hidden" id="page-iptu">
+        <div class="panel">
+            <h2>IPTU e meus imóveis</h2>
+            <p>Consulte os dados dos seus imóveis cadastrados</p>
+
+            <h3>Cadastrar imóvel</h3>
+
+            <form id="form-imovel">
+                <label for="imovel-logradouro">Rua / Logradouro</label>
+                <input id="imovel-logradouro" required>
+
+                <label for="imovel-numero">Número</label>
+                <input id="imovel-numero" required>
+
+                <label for="imovel-bairro">Bairro</label>
+                <input id="imovel-bairro" required>
+
+                <label for="imovel-cidade">Cidade</label>
+                <input id="imovel-cidade" list="lista-cidades" required>
+
+                <datalist id="lista-cidades">
+                    <option value="Vitória de Santo Antão">
+                        <option value="Recife">
+                            <option value="Olinda">
+                                <option value="Jaboatão dos Guararapes">
+                                    <option value="Caruaru">
+                                        <option value="Paulista">
+                                            <option value="Camaragibe">
+                                                <option value="Cabo de Santo Agostinho">
+                                                    <option value="Igarassu">
+                                                        <option value="Gravatá">
+                                                            <option value="Limoeiro">
+                                                                <option value="Garanhuns">
+                                                                    <option value="Bezerros">
+                                                                        <option value="Surubim">
+                                                                            <option value="Paudalho">
+                                                                                <option value="Escada">
+                                                                                    <option value="Moreno">
+                                                                                        <option value="Bonaça">
+                                                                                            <option value="Pombos">
+                                                                                                <option value="Timbaúba">
+                                                                                                    <option value="Petrolina">
+                                                                                                    </option>
+                                                                                                </option>
+                                                                                            </option>
+                                                                                        </option>
+                                                                                    </option>
+                                                                                </option>
+                                                                            </option>
+                                                                        </option>
+                                                                    </option>
+                                                                </option>
+                                                            </option>
+                                                        </option>
+                                                    </option>
+                                                </option>
+                                            </option>
+                                        </option>
+                                    </option>
+                                </option>
+                            </option>
+                        </option>
+                    </option>
+                    
+                </datalist>
+
+                <label for="imovel-cep">CEP</label>
+                <input id="imovel-cep" required>
+
+                <button class="primary" type="submit">Cadastrar Imóvel</button>
+            </form>
+
+            <div id="imoveis-lista">
+                <p>Seus imóveis aparecerão aqui.</p>
+            </div>
+        </div>
+    </section> 
     <section class="page hidden" id="page-solicitar">
      <div class="panel form-panel">
       <h2>

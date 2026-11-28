@@ -3,114 +3,125 @@ const $$ = selector => [...document.querySelectorAll(selector)];
 let services = [];
 let token = sessionStorage.getItem('soundfier_token');
 let currentUser = null;
+let solicitacaoPorVoz = false;
+
 const titles = {
-  inicio: ['Sua cidade, mais perto de você.', 'Encontre serviços, registre solicitações e acompanhe seus protocolos em um só lugar.'],
-  servicos: ['Serviços disponíveis', 'Escolha o atendimento que você precisa.'],
-  solicitar: ['Como podemos ajudar?', 'Registre sua solicitação de forma simples.'],
-  historico: ['Meus pedidos', 'Acompanhe suas solicitações em um só lugar.'],
-  conta: ['Minha conta', 'Entre ou crie seu cadastro para acessar seus pedidos.']
+    inicio: ['Sua cidade, mais perto de você.', 'Encontre serviços, registre solicitações e acompanhe seus protocolos em um só lugar.'],
+    servicos: ['Serviços disponíveis', 'Escolha o atendimento que você precisa.'],
+    solicitar: ['Como podemos ajudar?', 'Registre sua solicitação de forma simples.'],
+    historico: ['Meus pedidos', 'Acompanhe suas solicitações em um só lugar.'],
+    conta: ['Minha conta', 'Entre ou crie seu cadastro para acessar seus pedidos.'],
+    iptu: ['IPTU e imóveis', 'Consulte os dados dos seus imóveis.'],
 };
 function alertMsg(message) {
-  $('#alert').textContent = message;
-  $('#alert').classList.remove('hidden');
+    $('#alert').textContent = message;
+    $('#alert').classList.remove('hidden');
 }
 function page(name) {
-  $$('.page').forEach(el => el.classList.toggle('hidden', el.id !== 'page-' + name));
-  $$('.nav').forEach(el => el.classList.toggle('active', el.dataset.page === name));
-  $('#page-title').textContent = titles[name][0];
-  $('#page-subtitle').textContent = titles[name][1];
-  $('#alert').classList.add('hidden');
-  if (name === 'servicos' || name === 'solicitar') loadServices();
-  if (name === 'solicitar' && currentUser) loadUnits();
-  if (name === 'historico' && currentUser) loadHistory();
-  if ((name === 'historico' || name === 'solicitar') && !currentUser) alertMsg('Entre ou crie uma conta em Minha conta para continuar.');
-  window.scrollTo(0, 0);
+    $$('.page').forEach(el => el.classList.toggle('hidden', el.id !== 'page-' + name));
+    $$('.nav').forEach(el => el.classList.toggle('active', el.dataset.page === name));
+    $('#page-title').textContent = titles[name][0];
+    $('#page-subtitle').textContent = titles[name][1];
+    $('#alert').classList.add('hidden');
+    if (name === 'servicos' || name === 'solicitar') loadServices();
+    if (name === 'iptu' && currentUser) loadImoveis();
+    if (name === 'iptu' && !currentUser) alertMsg('Entre na sua conta para consultar seus imóveis.');
+    if (name === 'solicitar' && currentUser) loadUnits();
+    if (name === 'historico' && currentUser) loadHistory();
+    if ((name === 'historico' || name === 'solicitar') && !currentUser) alertMsg('Entre ou crie uma conta em Minha conta para continuar.');
+    window.scrollTo(0, 0);
 }
 $$('[data-page]').forEach(button => button.onclick = () => page(button.dataset.page));
 $$('[data-go]').forEach(button => button.onclick = () => page(button.dataset.go));
+
 async function api(endpoint, options = {}) {
-  const headers = {...(options.headers || {})};
-  if (token) headers.Authorization = 'Bearer ' + token;
-  const response = await fetch('/api/' + endpoint, {...options, headers});
-  const data = await response.json().catch(() => null);
-  if (!response.ok) throw Error(data?.mensagem || 'Erro HTTP ' + response.status);
-  return data;
+    const headers = {...(options.headers || {})};
+    if (token) headers.Authorization = 'Bearer ' + token;
+    const response = await fetch('/api/' + endpoint, {...options, headers});
+    const data = await response.json().catch(() => null);
+    if (!response.ok) throw Error(data?.mensagem || 'Erro HTTP ' + response.status);
+    return data;
 }
+
 function element(tag, text, className) {
-  const el = document.createElement(tag);
-  el.textContent = text ?? '';
-  if (className) el.className = className;
-  return el;
+    const el = document.createElement(tag);
+    el.textContent = text ?? '';
+    if (className) el.className = className;
+    return el;
 }
+
 function refreshAccount() {
-  $('#account-forms').classList.toggle('hidden', !!currentUser);
-  $('#account-info').classList.toggle('hidden', !currentUser);
-  $('#account-name').textContent = currentUser ? 'Olá, ' + currentUser.nome : '';
-  $('#request-account-status').textContent = currentUser ? 'Solicitação em nome de ' + currentUser.nome : 'Entre na sua conta para registrar solicitações.';
-  $('#history-account-status').textContent = currentUser ? 'Pedidos de ' + currentUser.nome : 'Entre na sua conta para consultar seus pedidos.';
-  $('#submit-request').disabled = !currentUser;
+    $('#account-forms').classList.toggle('hidden', !!currentUser);
+    $('#account-info').classList.toggle('hidden', !currentUser);
+    $('#account-name').textContent = currentUser ? 'Olá, ' + currentUser.nome : '';
+    $('#request-account-status').textContent = currentUser ? 'Solicitação em nome de ' + currentUser.nome : 'Entre na sua conta para registrar solicitações.';
+    $('#history-account-status').textContent = currentUser ? 'Pedidos de ' + currentUser.nome : 'Entre na sua conta para consultar seus pedidos.';
+    $('#submit-request').disabled = !currentUser;
 }
+
 async function restoreSession() {
-  if (token) {
-    try { currentUser = await api('minha-conta'); }
-    catch { token = null; sessionStorage.removeItem('soundfier_token'); }
-  }
-  refreshAccount();
+    if (token) {
+        try { currentUser = await api('minha-conta'); }
+        catch { token = null; sessionStorage.removeItem('soundfier_token'); }
+    }
+    refreshAccount();
 }
 $('#signup-form').onsubmit = async event => {
-  event.preventDefault();
-  const cpf = $('#signup-cpf').value.replace(/\D/g, '');
-  try {
-    const data = await api('cidadaos', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
-      cpf, nome:$('#signup-name').value.trim(), email:$('#signup-email').value.trim(),
-      telefone:$('#signup-phone').value.trim(), senha:$('#signup-password').value
-    })});
-    $('#login-cpf').value = cpf;
-    $('#signup-form').reset();
-    alertMsg('Cadastro realizado! Agora entre com seu CPF e sua senha.');
-    $('#login-password').focus();
-  } catch(err) { alertMsg('Não foi possível cadastrar: ' + err.message); }
+    event.preventDefault();
+    const cpf = $('#signup-cpf').value.replace(/\D/g, '');
+    try {
+        const data = await api('cidadaos', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
+        cpf, nome:$('#signup-name').value.trim(), email:$('#signup-email').value.trim(),
+        telefone:$('#signup-phone').value.trim(), senha:$('#signup-password').value
+        })});
+        $('#login-cpf').value = cpf;
+        $('#signup-form').reset();
+        alertMsg('Cadastro realizado! Agora entre com seu CPF e sua senha.');
+        $('#login-password').focus();
+    } catch(err) { alertMsg('Não foi possível cadastrar: ' + err.message); }
 };
 $('#login-form').onsubmit = async event => {
-  event.preventDefault();
-  try {
-    const data = await api('login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
-      cpf:$('#login-cpf').value.replace(/\D/g,''), senha:$('#login-password').value
-    })});
-    token = data.token;
-    sessionStorage.setItem('soundfier_token', token);
-    currentUser = data.cidadao;
-    $('#login-form').reset();
-    refreshAccount();
-    page('historico');
-  } catch(err) { alertMsg('Não foi possível entrar: ' + err.message); }
+    event.preventDefault();
+    try {
+        const data = await api('login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
+        cpf:$('#login-cpf').value.replace(/\D/g,''), senha:$('#login-password').value
+        })});
+        token = data.token;
+        sessionStorage.setItem('soundfier_token', token);
+        currentUser = data.cidadao;
+        $('#login-form').reset();
+        refreshAccount();
+        page('historico');
+    } catch(err) { alertMsg('Não foi possível entrar: ' + err.message); }
 };
 $('#logout').onclick = () => {
-  token = null;
-  currentUser = null;
-  sessionStorage.removeItem('soundfier_token');
-  $('#history').replaceChildren();
-  refreshAccount();
-  page('inicio');
+    token = null;
+    currentUser = null;
+    sessionStorage.removeItem('soundfier_token');
+    $('#history').replaceChildren();
+    refreshAccount();
+    page('inicio');
 };
+
 async function loadServices() {
-  try {
-    services = await api('servicos');
-    $('#connection').textContent = '● Sistema disponível';
-    $('#connection').classList.remove('bad');
-    renderServices();
-    const select = $('#service-select');
-    const old = select.value;
-    select.replaceChildren(new Option('Selecione um serviço', ''));
-    services.forEach(service => select.add(new Option(service.nome, service.id_servico)));
-    select.value = old;
-  } catch(err) {
-    $('#connection').textContent = '● Sistema indisponível';
-    $('#connection').classList.add('bad');
-    $('#services').replaceChildren(element('p', 'Não foi possível carregar os serviços.'));
-    alertMsg('Não foi possível consultar os serviços: ' + err.message);
-  }
+    try {
+        services = await api('servicos');
+        $('#connection').textContent = '● Sistema disponível';
+        $('#connection').classList.remove('bad');
+        renderServices();
+        const select = $('#service-select');
+        const old = select.value;
+        select.replaceChildren(new Option('Selecione um serviço', ''));
+        services.forEach(service => select.add(new Option(service.nome, service.id_servico)));
+        select.value = old;
+    } catch(err) {
+        $('#connection').textContent = '● Sistema indisponível';
+        $('#connection').classList.add('bad');
+        $('#services').replaceChildren(element('p', 'Não foi possível carregar os serviços.'));
+        alertMsg('Não foi possível consultar os serviços: ' + err.message);
+    }
 }
+
 function verificarAgendamento() {
     const servicoSelecionado = services.find(
         service => String(service.id_servico) === $('#service-select').value
@@ -156,10 +167,13 @@ async function loadUnits() {
             );
         });
 
+        return units;
+
     } catch (err) {
         alertMsg('Não foi possível carregar as unidades: ' + err.message);
     }
 }
+
 async function loadAvailableTimes() {
   console.log('A função loadAvailableTimes foi chamada!');
 
@@ -175,7 +189,7 @@ async function loadAvailableTimes() {
         horarioSelect.replaceChildren(
             new Option('Selecione a unidade e a data primeiro', '')
         );
-        return;
+        return [];
     }
 
     try {
@@ -193,6 +207,8 @@ async function loadAvailableTimes() {
             );
         });
 
+        return horarios;
+
         if (!horarios.length) {
             horarioSelect.replaceChildren(
                 new Option('Não há horários disponíveis', '')
@@ -204,26 +220,28 @@ async function loadAvailableTimes() {
             new Option('Erro ao consultar horários', '')
         );
         alertMsg('Não foi possível consultar os horários: ' + err.message);
+        return [];
     }
 }
+
 $('#appointment-date').addEventListener('change', loadAvailableTimes);
 
 $('#unit-select').addEventListener('change', loadAvailableTimes);
 
 function renderServices() {
-  const box = $('#services');
-  box.replaceChildren();
-  const query = $('#search').value.toLowerCase();
-  const filtered = services.filter(s => (s.nome + ' ' + (s.categoria || '') + ' ' + (s.descricao || '')).toLowerCase().includes(query));
-  if (!filtered.length) { box.append(element('p','Nenhum serviço encontrado.')); return; }
-  filtered.forEach(service => {
-    const card = element('article', '', 'service');
-    card.append(element('small', service.categoria || 'Serviço municipal'), element('strong',service.nome), element('p',service.descricao || ''));
-    const button = element('button', 'Solicitar →');
-    button.onclick = () => { page('solicitar'); $('#service-select').value = service.id_servico; };
-    card.append(button);
-    box.append(card);
-  });
+    const box = $('#services');
+    box.replaceChildren();
+    const query = $('#search').value.toLowerCase();
+    const filtered = services.filter(s => (s.nome + ' ' + (s.categoria || '') + ' ' + (s.descricao || '')).toLowerCase().includes(query));
+    if (!filtered.length) { box.append(element('p','Nenhum serviço encontrado.')); return; }
+    filtered.forEach(service => {
+        const card = element('article', '', 'service');
+        card.append(element('small', service.categoria || 'Serviço municipal'), element('strong',service.nome), element('p',service.descricao || ''));
+        const button = element('button', 'Solicitar →');
+        button.onclick = () => { page('solicitar'); $('#service-select').value = service.id_servico; };
+        card.append(button);
+        box.append(card);
+    });
 }
 $('#search').oninput = renderServices;
 $('#reload').onclick = loadServices;
@@ -328,7 +346,134 @@ $('#request-form').onsubmit = async event => {
     }
 };
 
+async function loadImoveis() {
+    const box = $('#imoveis-lista');
 
+    box.replaceChildren(element('p', 'Consultando seus imóveis...'));
+
+    try {
+        const imoveis = await api('imoveis');
+
+        box.replaceChildren();
+
+        if (!imoveis.length) {
+        box.append(element('p', 'Você ainda não possui imóveis cadastrados.'));
+        return;
+        }
+
+        imoveis.forEach(imovel => {
+        const card = element('div', '', 'imovel-card');
+
+        const cabecalho = element('div', '', 'imovel-card-header');
+        cabecalho.append(
+            element('strong', 'Imóvel #' + imovel.id_imovel),
+            element('span', imovel.situacao || 'Não informada', 'imovel-status')
+        );
+
+        const endereco = element(
+            'h3',
+            [imovel.logradouro, imovel.numero].filter(Boolean).join(', ')
+        );
+
+        const detalhes = element('div', '', 'imovel-detalhes');
+
+        detalhes.append(
+            element('p', 'Bairro: ' + (imovel.bairro || 'Não informado')),
+            element('p', 'Cidade: ' + (imovel.cidade || 'Não informada')),
+            element('p', 'CEP: ' + (imovel.cep || 'Não informado'))
+        );
+
+        const botaoEditar = element(
+    'button',
+    'Editar imóvel',
+    'btn-editar-imovel'
+    );
+
+    botaoEditar.type = 'button';
+
+    botaoEditar.addEventListener('click', async () => {
+    const logradouro = prompt('Rua / Logradouro:', imovel.logradouro);
+    if (logradouro === null) return;
+
+    const numero = prompt('Número:', imovel.numero);
+    if (numero === null) return;
+
+    const bairro = prompt('Bairro:', imovel.bairro);
+    if (bairro === null) return;
+
+    const cidade = prompt('Cidade:', imovel.cidade);
+    if (cidade === null) return;
+
+    const cep = prompt('CEP:', imovel.cep);
+    if (cep === null) return;
+
+    const dados = {
+        logradouro: logradouro.trim(),
+        numero: numero.trim(),
+        bairro: bairro.trim(),
+        cidade: cidade.trim(),
+        cep: cep.trim()
+    };
+
+    if (Object.values(dados).some(valor => !valor)) {
+        alertMsg('Preencha todos os campos.');
+        return;
+    }
+
+    try {
+        await api('imoveis/' + imovel.id_imovel, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dados)
+        });
+
+        alertMsg('Imóvel atualizado com sucesso!');
+        loadImoveis();
+
+    } catch (erro) {
+        alertMsg('Erro ao editar imóvel: ' + erro.message);
+    }
+});
+
+      const botaoRemover = element(
+        'button',
+        'Remover imóvel',
+        'bnt-remover-imovel'
+      );
+
+      botaoRemover.type = 'button';
+
+      botaoRemover.addEventListener('click', async () => {
+        const confirmar = confirm(
+            'Tem certeza de que deseja remover este imóvel?'
+        );
+
+        if (!confirmar) return;
+
+        try {
+            await api('imoveis/' + imovel.id_imovel, {
+                method: 'DELETE'
+            });
+            alertMsg('Imóvel removido com sucesso!');
+            loadImoveis();
+
+        } catch (erro) {
+            alertMsg('Erro ao remover imóvel: ' + erro.message);
+        }
+      });
+ 
+      card.append(cabecalho, endereco, detalhes, botaoEditar, botaoRemover); 
+      box.append(card);
+    });
+
+  } catch (erro) {
+    box.replaceChildren(
+      element('p', 'Não foi possível consultar seus imóveis: ' + erro.message)
+    );
+  }
+}
 
 async function loadHistory() {
     const box = $('#history');
@@ -343,6 +488,7 @@ async function loadHistory() {
     try {
         const rows = await api('solicitacoes');
         const agendamentos = await api('agendamentos');
+        const feedbacks = await api('feedbacks');
 
         box.replaceChildren();
 
@@ -387,7 +533,12 @@ async function loadHistory() {
                 );
 
                 // Mostrar botão somente para agendamentos ativos
-                if (String(agendamento.status_agendamento).toLowerCase() === 'agendado') {
+                if (
+                    String(agendamento.status_agendamento).toLowerCase() === 'agendado' &&
+                    !['concluído', 'concluído', 'atentido'].includes(
+                        String(request.status || '').toLowerCase() 
+                    ) 
+                ) {
                     const cancelar = element('button', 'Cancelar agendamento', 'small-btn');
                     cancelar.type = 'button';
 
@@ -417,6 +568,62 @@ async function loadHistory() {
                 }
             });
 
+            if ( 
+                ['concluído', 'concluido', 'atendido'].includes(
+                String(request.status || '').toLowerCase()
+                ) &&
+                !feedbacks.some(feedback =>
+                    Number(feedback.id_solicitacao) === Number(request.id_solicitacao)
+                ) 
+            ) {
+                const titulo = element('strong', 'Avalie este atendimento');
+
+                const nota = document.createElement('select');
+                nota.innerHTML = `
+                    <option value="">Escolha uma nota</option>
+                    <option value="1">1 - Muito ruim</option>
+                    <option value="2">2 - Ruim</option>
+                    <option value="3">3 - Regular</option>
+                    <option value="4">4 - Bom</option>
+                    <option value="5">5 - Muito bom</option>
+                `;
+
+                const comentario = document.createElement('textarea');
+                comentario.placeholder = 'Deixe seu comentário (opcional)';
+
+                const avaliar = element('button', 'Enviar avaliação', 'small-btn');
+                avaliar.type = 'button';
+
+                avaliar.addEventListener('click', async () => {
+                    if (!nota.value) {
+                        alertMsg('Escolha uma nota antes de enviar.');
+                        return;
+                    }
+
+                    avaliar.disabled = true;
+
+                    try {
+                        const resultado = await api('feedbacks', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                id_solicitacao: request.id_solicitacao,
+                                nota: Number(nota.value),
+                                comentario: comentario.value
+                            })
+                        });
+
+                        alertMsg(resultado.mensagem);
+                        await loadHistory();
+
+                    } catch (err) {
+                        alertMsg('Erro ao enviar avaliação: ' + err.message);
+                        avaliar.disabled = false;
+                    }
+                });
+
+                item.append(titulo, nota, comentario, avaliar);
+            }
             box.append(item);
         });
 
@@ -430,6 +637,130 @@ async function loadHistory() {
 $('#contrast').onclick = () => document.body.classList.toggle('contrast');
 let fontSize = 16;
 $('#font').onclick = () => { fontSize = fontSize >= 20 ? 16 : fontSize + 2; document.documentElement.style.fontSize = fontSize + 'px'; };
+
+function converterDataFalada(resposta) {
+    const numeros = resposta.match(/\d+/g);
+
+    if (!numeros || numeros.length < 3) {
+        return null;
+    }
+    const [dia, mes, ano] = numeros.map(Number);
+    const data = new Date(ano, mes -1, dia);
+    if (
+        data.getFullYear() !== ano ||
+        data.getMonth() !== mes -1 ||
+        data.getDate() !==dia
+    ) {
+        return null;
+    }
+    return `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+}
+
+function converterHorarioFalado(resposta) {
+    const texto = resposta.toLowerCase().trim();
+
+    const numeros = texto.match(/\d+/g);
+
+        if (numeros) {
+            let hora = Number(numeros[0]);
+            let minuto = numeros.length > 1 ? Number(numeros[1]) : 0;
+
+            if (hora <= 23 && minuto <= 59) {
+                return `${String(hora).padStart(2, '0')}:${String(minuto).padStart(2, '0')}`;
+            }
+        }
+
+        const horas = {
+            'oito': 8, 'nove': 9, 'dez': 10, 'onze': 11
+        };
+
+        for (const [nome, numero] of Object.entries(horas)) {
+            if (texto.includes(nome)) {
+                const minuto = texto.includes('meia') ? 30 : 0;
+                return `${String(numero).padStart(2, '0')}:${String(minuto).padStart(2, '0')}`;
+            }
+        }
+
+    return null;
+}
+
+async function preencherAgendamentoPorVoz() {
+    await falarMensagem('Vamos agendar sua consulta.');
+
+    await falarMensagem('Qual é o motivo da consulta?');
+    const motivo = await ouvirResposta();
+    $('#description').value = motivo;
+
+
+    await falarMensagem('Qual unidade de saúde você deseja?');
+    const units = await loadUnits();
+    let unidadeEscolhida = null;
+
+
+    while (!unidadeEscolhida) {
+        const respostaUnidade = (await ouvirResposta()).toLowerCase();
+
+        unidadeEscolhida = units.find(unit =>
+            unit.nome.toLowerCase().includes(respostaUnidade) ||
+            respostaUnidade.includes(unit.nome.toLowerCase())
+        );
+
+        if (!unidadeEscolhida) {
+            await falarMensagem('Não encontrei essa unidade. Diga novamente o nome da unidade.');
+        }
+    }
+
+    $('#unit-select').value = unidadeEscolhida.id_unidade;
+
+    await falarMensagem('Qual é a data desejada? Diga dia, mês e ano.');
+    let respostaData = await ouvirResposta();
+    let dataConvertida = converterDataFalada(respostaData);
+
+    while (!dataConvertida) {
+        await falarMensagem('Não consegui entender a data. Diga novamente dia, mês e ano.');
+        respostaData = await ouvirResposta();
+        dataConvertida = converterDataFalada(respostaData);
+    }
+
+    $('#appointment-date').value = dataConvertida;
+    const horariosDisponiveis = await loadAvailableTimes();
+
+    if (!horariosDisponiveis || horariosDisponiveis.length === 0) {
+        await falarMensagem('Não há horários disponíveis para essa data. Vamos escolher outra data.');
+        return;
+    }
+
+    await falarMensagem('Qual horário você prefere?');
+    let respostaHorario = await ouvirResposta();
+    let horarioConvertido = converterHorarioFalado(respostaHorario);
+
+    let horarioEscolhido = horariosDisponiveis.find(horario =>
+        horario === horarioConvertido
+    );
+
+    while (!horarioEscolhido) {
+        await falarMensagem('Esse horário não está disponível. Escolha outro horário.');
+        respostaHorario = await ouvirResposta();
+        horarioConvertido = converterHorarioFalado(respostaHorario);
+
+        horarioEscolhido = horariosDisponiveis.find(horario =>
+            horario === horarioConvertido
+        );
+    }
+
+    $('#appointment-time').value = horarioEscolhido;
+
+    await falarMensagem('Sua consulta está pronta. Deseja confirmar a solicitação? Responda sim ou não.');
+
+    const confirmaçao = (await ouvirResposta()).toLowerCase();
+
+    if (confirmaçao.includes('sim')) {
+        await falarMensagem('Confirmando sua solicitação.');
+        $('#request-form').requestSubmit();
+    } else {
+        await falarMensagem('Tudo bem, Você pode corrigir os dados diretamente na tela.');
+    }
+}
 
 function falarMensagem(mensagem) {
     return new Promise(resolve => {
@@ -471,7 +802,6 @@ function ouvirResposta() {
     });
 }
 
-
 async function iniciarCadastroPorVoz() {
     try {
         const normalizar = texto => texto.toLowerCase()
@@ -487,9 +817,6 @@ async function iniciarCadastroPorVoz() {
             .replace(/\s+(hifen|traco)\s+/g, '-')
             .replace(/\s/g, '');
 
-        // Nome
-        await falarMensagem('Qual é seu nome completo?');
-        let nome = await ouvirResposta();
         $('#signup-name').value = nome.trim();
 
         // CPF
@@ -649,6 +976,22 @@ $('#speak').onclick = () => {
 
     recognition.onresult = async event => {
         const term = event.results[0][0].transcript;
+        try {
+            await api('interacoes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tipo_entrada: 'Voz',
+                    comando_recebido: term,
+                    resposta_sistema: 'Comando recebido pelo Soundfier.',
+                    resultado: 'Comando processado.',
+                    compreendida: true
+                })
+            });
+        } catch (err) {
+            window.alert('Erro ao registrar interação: ' + err.message);
+        }
+
         const fala = term.toLowerCase()
             .normalize('NFD')
             .replace(/[\u0300-\u036f]/g, '');
@@ -686,7 +1029,8 @@ $('#speak').onclick = () => {
         }
 
         // Agendamentos e consultas
-        if (/\b(agendar|agendamento|marcar consulta|marcar atendimento)\b/.test(fala)) {
+        if (/\b(quero fazer um agendamento|agendar|agendamento|marcar consulta|marcar atendimento|quero marcar uma consulta)\b/.test(fala)) {
+            solicitacaoPorVoz = true;
             await loadServices();
             page('solicitar');
 
@@ -700,6 +1044,12 @@ $('#speak').onclick = () => {
 
             if (servico) {
                 $('#service-select').value = servico.id_servico;
+
+                $('#service-select').dispatchEvent(new Event('change'));
+
+                if (currentUser) {
+                    await preencherAgendamentoPorVoz();
+                }
             }
 
             return;
@@ -725,5 +1075,36 @@ $('#speak').onclick = () => {
     $('#speech-result').textContent = 'Ouvindo...';
 };
 $('#speak-float').onclick = () => $('#speak').click();
+
+$('#form-imovel').addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const dados = {
+        logradouro: $('#imovel-logradouro').value,
+        numero: $('#imovel-numero').value,
+        bairro: $('#imovel-bairro').value,
+        cidade: $('#imovel-cidade').value,
+        cep: $('#imovel-cep').value,
+        situacao: 'Ativo'
+    };
+
+    try {
+        await api('imoveis', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dados)
+        });
+
+        alertMsg('Imóvel cadastrado com sucesso!');
+        $('#form-imovel').reset();
+        loadImoveis();
+
+    } catch (erro) {
+        alertMsg('Erro ao cadastrar imóvel: ' + erro.message);
+    }
+});
+
 restoreSession();
 loadServices();

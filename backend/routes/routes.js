@@ -48,7 +48,9 @@ const {
 
 const {
     cadastrarImovel,
-    listarImoveis
+    listarImoveis,
+    removerImovel,
+    editarImovel
 } = require('../controllers/imovelController');
 
 const {
@@ -75,7 +77,6 @@ router.get('/solicitacoes', requireAuth, async (req,res) => {
 
 // Rotas dos agendamentos
 router.post('/agendamentos', requireAuth, cadastrarAgendamento);
-
 router.get('/agendamentos', requireAuth, async (req, res) => {
     try {
         const resultado = await pool.query(
@@ -109,6 +110,7 @@ router.get('/agendamentos', requireAuth, async (req, res) => {
 });
 router.get('/agendamentos/disponiveis', requireAuth, listarHorariosDisponiveis);
 // Cancelar agendamento
+// Cancelar agendamento
 router.patch('/agendamentos/:id/cancelar', requireAuth, async (req, res) => {
     try {
         const id = Number(req.params.id);
@@ -121,6 +123,7 @@ router.patch('/agendamentos/:id/cancelar', requireAuth, async (req, res) => {
              AND a.id_solicitacao = s.id_solicitacao
              AND s.id_cidadao = $2
              AND LOWER(a.status) = 'agendado'
+             AND LOWER(s.status) NOT IN ('concluído', 'concluido', 'atendido')
              RETURNING a.id_agendamento`,
             [id, req.citizenId]
         );
@@ -149,7 +152,7 @@ router.get('/unidades', listarUnidades);
 
 // Rotas dos feedbacks
 router.post('/feedbacks', requireAuth, cadastrarFeedback);
-router.get('/feedbacks', requireAuth, (req,res)=>res.status(403).json({mensagem:'Acesso restrito.'}));
+router.get('/feedbacks', requireAuth, listarFeedbacks);
 
 // Rotas de autenticação
 router.post('/login', autenticarCidadao);
@@ -167,7 +170,9 @@ router.get('/interacoes', requireAuth, (req,res)=>res.status(403).json({mensagem
 
 // Imóveis
 router.post('/imoveis', requireAuth, cadastrarImovel);
-router.get('/imoveis', requireAuth, (req,res)=>res.status(403).json({mensagem:'Acesso restrito.'}));
+router.get('/imoveis', requireAuth, listarImoveis);
+router.delete('/imoveis/:id', requireAuth, removerImovel);
+router.put('/imoveis/:id', requireAuth, editarImovel);
 
 // Endereços
 router.post('/enderecos', requireAuth, cadastrarEndereco);
